@@ -1,0 +1,61 @@
+routes:
+  - from: London
+    to: Dover
+    modes:
+      - bus:
+          duration: 2h 30m
+          distance: 130km
+          cost: 20
+      - taxi:
+          duration: 1h 30m
+          distance: 120km
+          cost: 100
+      - train:
+          duration: 2h
+          distance: 120km
+          cost: 30
+  - from: London
+    to: Paris
+    modes:
+      - bus:
+          duration: 7h
+          distance: 450km
+          cost: 50
+      - taxi:
+          duration: 5h
+          distance: 450km
+          cost: 300
+      - train:
+          duration: 2h 30m
+          distance: 450km
+          cost: 100
+  - from: London
+    to: Düsseldorf
+    modes:
+      - bus:
+          duration: 12h
+          distance: 600km
+          cost: 70
+      - taxi:
+          duration: 10h
+          distance: 600km
+          cost: 500
+      - train:
+          duration: 6h
+          distance: 600km
+          cost: 150
+  - from: Dover
+    to: Calais
+    modes:
+      - bus:
+          duration: 1h
+          distance: 70km
+          cost: 15
+      - taxi:
+          duration: 45m
+          distance: 70km
+          cost: 80
+      - train:
+          duration: 1h 15m
+          distance: 70km
+          cost: 25

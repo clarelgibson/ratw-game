@@ -1,0 +1,121 @@
+cities:
+  - name: London
+    country: UK
+    currency: GBP
+    exchange_rate: 1.0
+    longitude: -0.1276
+    latitude: 51.5074
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 2278
+  - name: Dover
+    country: UK
+    currency: GBP
+    exchange_rate: 1.0
+    longitude: 1.3221
+    latitude: 51.1290
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 2170
+  - name: Calais
+    country: France
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 1.8552
+    latitude: 50.9513
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 2128
+  - name: Lille
+    country: France
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 3.0586
+    latitude: 50.6292
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 2038
+  - name: Paris
+    country: France
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 2.3522
+    latitude: 48.8566
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 1979
+  - name: Lyon
+    country: France
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 4.8357
+    latitude: 45.7640
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 1662
+  - name: Düsseldorf
+    country: Germany
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 6.7850
+    latitude: 51.2277
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 1874
+  - name: Munich
+    country: Germany
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 11.5820
+    latitude: 48.1351
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 1378
+  - name: Milan
+    country: Italy
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 9.1859
+    latitude: 45.4654
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 1344
+  - name: Venice
+    country: Italy
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 12.3155
+    latitude: 45.4408
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 1140
+  - name: Bari
+    country: Italy
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 17.0692
+    latitude: 41.1171
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 564
+  - name: Budapest
+    country: Hungary
+    currency: HUF
+    exchange_rate: 365.0
+    longitude: 19.0402
+    latitude: 47.4979
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 1041
+  - name: Patras
+    country: Greece
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 21.7440
+    latitude: 38.2519
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 71
+  - name: Thessaloniki
+    country: Greece
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 22.9444
+    latitude: 40.6401
+    next_checkpoint: Delphi
+    distance_to_checkpoint_km: 242
+  - name: Delphi
+    country: Greece
+    currency: EUR
+    exchange_rate: 1.17
+    longitude: 22.5
+    latitude: 38.5
+    next_checkpoint: Baku
+    distance_to_checkpoint_km: 2350
