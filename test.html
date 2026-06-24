@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>RATW — tests</title>
+    <script src="vendor/js-yaml.min.js"></script>
+    <style>
+      body { font-family: monospace; background: #14161a; color: #e8eaed; padding: 24px; }
+      .pass { color: #6ee06e; }
+      .fail { color: #ff6b6b; font-weight: bold; }
+      h1 { font-size: 18px; }
+    </style>
+  </head>
+  <body>
+    <h1>Race Across The World — test results</h1>
+    <div id="out"></div>
+
+    <script type="module">
+      import { loadData } from './js/data.js';
+      import { cheapestPathCost, fastestPathDuration } from './js/pathfinding.js';
+      import { rankRacers } from './js/leaderboard.js';
+      import { START, DEST } from './js/config.js';
+
+      const out = document.getElementById('out');
+      let failures = 0;
+
+      function check(name, cond, detail = '') {
+        const div = document.createElement('div');
+        div.className = cond ? 'pass' : 'fail';
+        div.textContent = `${cond ? '✓' : '✗'} ${name}${detail ? ' — ' + detail : ''}`;
+        out.appendChild(div);
+        if (!cond) failures++;
+      }
+
+      async function run() {
+        await loadData();
+
+        // --- Pathfinding ---
+        const cheapest = cheapestPathCost(START, DEST);
+        const fastest = fastestPathDuration(START, DEST);
+        check('cheapest London→Delphi cost is finite', Number.isFinite(cheapest), `£${cheapest}`);
+        check('fastest London→Delphi duration is finite', Number.isFinite(fastest), `${fastest}h`);
+        check('cheapest cost is ~£255 (data-dependent)', Math.abs(cheapest - 255) < 60, `£${cheapest}`);
+        check('cheapest path cost from Delphi to itself is 0', cheapestPathCost(DEST, DEST) === 0);
+
+        // --- Leaderboard ranking ---
+        // 1. Both finished → faster time wins.
+        let r = rankRacers([
+          { name: 'A', reached: true, time: 50, distance: 2300 },
+          { name: 'B', reached: true, time: 40, distance: 2500 },
+        ]);
+        check('both finished: faster time wins', r.winner.name === 'B' && !r.bothFailed);
+
+        // 2. One finished beats one stranded (even if stranded went further... it can't).
+        r = rankRacers([
+          { name: 'A', reached: false, time: 30, distance: 5000 },
+          { name: 'B', reached: true, time: 80, distance: 2300 },
+        ]);
+        check('finisher beats non-finisher', r.winner.name === 'B' && !r.bothFailed);
+
+        // 3. Neither finished → furthest distance wins (tie-breaker).
+        r = rankRacers([
+          { name: 'A', reached: false, time: 20, distance: 1800 },
+          { name: 'B', reached: false, time: 25, distance: 1200 },
+        ]);
+        check('neither finished: furthest distance wins', r.winner.name === 'A' && r.bothFailed);
+
+        const summary = document.createElement('h1');
+        summary.textContent = failures === 0 ? 'ALL TESTS PASSED' : `${failures} TEST(S) FAILED`;
+        summary.className = failures === 0 ? 'pass' : 'fail';
+        out.appendChild(summary);
+      }
+
+      run().catch((e) => {
+        check('test harness ran', false, e.message);
+        console.error(e);
+      });
+    </script>
+  </body>
+</html>

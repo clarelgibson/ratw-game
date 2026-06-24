@@ -1,0 +1,264 @@
+:root {
+  --bg: #14161a;
+  --panel: #1d2026;
+  --ink: #e8eaed;
+  --muted: #9aa0a8;
+  --line: #2c3038;
+  --ocean: #0f1115;
+  --land: #3a3f47;
+  --land-stroke: #14161a;
+  --accent-yellow: #ffd23f; /* start & destination cities */
+  --player-red: #e23b3b; /* the human's marker */
+  --opponent-blue: #4aa3ff; /* the computer's marker */
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+header {
+  padding: 16px 24px 8px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0.5px;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  padding: 8px 24px 24px;
+  align-items: start;
+}
+
+.map-wrap {
+  background: var(--ocean);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#map {
+  width: 100%;
+  display: block;
+}
+
+/* --- Map elements --- */
+.ocean {
+  fill: var(--ocean);
+}
+
+.land path {
+  fill: var(--land);
+  stroke: var(--land-stroke);
+  stroke-width: 0.5;
+}
+
+.city-dot {
+  fill: var(--muted);
+}
+
+.city-dot.endpoint {
+  fill: var(--accent-yellow);
+  stroke: #000;
+  stroke-width: 0.5;
+}
+
+.city-label {
+  fill: var(--muted);
+  font-size: 9px;
+  pointer-events: none;
+}
+
+.city-label.endpoint {
+  fill: var(--accent-yellow);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.player-marker {
+  fill: var(--player-red);
+  stroke: #fff;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 4px rgba(226, 59, 59, 0.8));
+}
+
+.opponent-marker {
+  fill: var(--opponent-blue);
+  stroke: #fff;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 4px rgba(74, 163, 255, 0.8));
+}
+
+/* --- Side panel --- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.hud-item {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.hud-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+#routes-title {
+  font-size: 14px;
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+
+.routes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.route {
+  text-align: left;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s, transform 0.05s;
+}
+
+.route:hover:not(:disabled) {
+  border-color: var(--accent-yellow);
+}
+
+.route:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.route.unaffordable {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.route-head {
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.route-stats {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* --- Leaderboard overlay --- */
+.leaderboard {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.leaderboard.hidden {
+  display: none;
+}
+
+.leaderboard-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px 28px;
+  min-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.leaderboard-card h2 {
+  margin: 0 0 16px;
+}
+
+.leaderboard-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-card th,
+.leaderboard-card td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.leaderboard-card th {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.you-row {
+  background: rgba(255, 210, 63, 0.1);
+  font-weight: 700;
+}
+
+.leaderboard-card button {
+  margin-top: 18px;
+  background: var(--accent-yellow);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 820px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+}

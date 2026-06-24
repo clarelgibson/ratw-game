@@ -3,59 +3,245 @@ routes:
     to: Dover
     modes:
       - bus:
-          duration: 2h 30m
-          distance: 130km
-          cost: 20
+          duration: 2.5
+          distance: 120
+          cost: 15
       - taxi:
-          duration: 1h 30m
-          distance: 120km
-          cost: 100
+          duration: 2.0
+          distance: 125
+          cost: 250
       - train:
-          duration: 2h
-          distance: 120km
-          cost: 30
+          duration: 1.0
+          distance: 110
+          cost: 45
   - from: London
     to: Paris
     modes:
       - bus:
-          duration: 7h
-          distance: 450km
-          cost: 50
-      - taxi:
-          duration: 5h
-          distance: 450km
-          cost: 300
+          duration: 8.5
+          distance: 460
+          cost: 45
       - train:
-          duration: 2h 30m
-          distance: 450km
-          cost: 100
+          duration: 2.5
+          distance: 490
+          cost: 210
   - from: London
     to: Düsseldorf
     modes:
       - bus:
-          duration: 12h
-          distance: 600km
-          cost: 70
-      - taxi:
-          duration: 10h
-          distance: 600km
-          cost: 500
-      - train:
-          duration: 6h
-          distance: 600km
-          cost: 150
+          duration: 13.0
+          distance: 570
+          cost: 60
   - from: Dover
     to: Calais
     modes:
+      - ferry:
+          duration: 1.5
+          distance: 40
+          cost: 35
+  - from: Calais
+    to: Lille
+    modes:
       - bus:
-          duration: 1h
-          distance: 70km
+          duration: 1.5
+          distance: 110
+          cost: 10
+      - taxi:
+          duration: 1.5
+          distance: 110
+          cost: 215
+      - train:
+          duration: 0.5
+          distance: 105
+          cost: 25
+  - from: Calais
+    to: Paris
+    modes:
+      - bus:
+          duration: 4.0
+          distance: 290
+          cost: 25
+      - taxi:
+          duration: 3.0
+          distance: 295
+          cost: 540
+      - train:
+          duration: 2.0
+          distance: 310
+          cost: 50
+  - from: Lille
+    to: Paris
+    modes:
+      - bus:
+          duration: 3.0
+          distance: 225
           cost: 15
       - taxi:
-          duration: 45m
-          distance: 70km
-          cost: 80
+          duration: 2.5
+          distance: 220
+          cost: 410
       - train:
-          duration: 1h 15m
-          distance: 70km
+          duration: 1.0
+          distance: 225
+          cost: 65
+  - from: Lille
+    to: Düsseldorf
+    modes:
+      - bus:
+          duration: 5.5
+          distance: 290
           cost: 25
+      - train:
+          duration: 3.5
+          distance: 320
+          cost: 80
+  - from: Paris
+    to: Lyon
+    modes:
+      - bus:
+          duration: 6.0
+          distance: 465
+          cost: 30
+      - train:
+          duration: 2.0
+          distance: 425
+          cost: 115
+  - from: Paris
+    to: Milan
+    modes:
+      - bus:
+          duration: 13.0
+          distance: 850
+          cost: 65
+      - train:
+          duration: 7.0
+          distance: 855
+          cost: 165
+  - from: Lyon
+    to: Munich
+    modes:
+      - bus:
+          duration: 12.0
+          distance: 750
+          cost: 55
+      - train:
+          duration: 7.5
+          distance: 815
+          cost: 140
+  - from: Lyon
+    to: Milan
+    modes:
+      - bus:
+          duration: 7.0
+          distance: 440
+          cost: 35
+      - train:
+          duration: 5.0
+          distance: 450
+          cost: 90
+  - from: Düsseldorf
+    to: Munich
+    modes:
+      - bus:
+          duration: 10.5
+          distance: 610
+          cost: 40
+      - train:
+          duration: 5.0
+          distance: 545
+          cost: 145
+  - from: Munich
+    to: Budapest
+    modes:
+      - bus:
+          duration: 9.5
+          distance: 685
+          cost: 45
+      - train:
+          duration: 7.0
+          distance: 710
+          cost: 110
+  - from: Munich
+    to: Venice
+    modes:
+      - bus:
+          duration: 7.5
+          distance: 550
+          cost: 40
+      - train:
+          duration: 7.0
+          distance: 560
+          cost: 105
+  - from: Venice
+    to: Patras
+    modes:
+      - ferry:
+          duration: 32.5
+          distance: 1250
+          cost: 110
+  - from: Milan
+    to: Bari
+    modes:
+      - bus:
+          duration: 11.5
+          distance: 885
+          cost: 50
+      - train:
+          duration: 7.5
+          distance: 800
+          cost: 115
+  - from: Milan
+    to: Venice
+    modes:
+      - bus:
+          duration: 4.0
+          distance: 275
+          cost: 20
+      - taxi:
+          duration: 3.0
+          distance: 270
+          cost: 510
+      - train:
+          duration: 2.5
+          distance: 265
+          cost: 45
+  - from: Budapest
+    to: Thessaloniki
+    modes:
+      - bus:
+          duration: 18.0
+          distance: 1015
+          cost: 75
+      - train:
+          duration: 22.0
+          distance: 1110
+          cost: 85
+  - from: Patras
+    to: Delphi
+    modes:
+      - bus:
+          duration: 3.5
+          distance: 125
+          cost: 15
+      - taxi:
+          duration: 2.0
+          distance: 125
+          cost: 160
+  - from: Thessaloniki
+    to: Delphi
+    modes:
+      - bus:
+          duration: 5.5
+          distance: 365
+          cost: 35
+      - taxi:
+          duration: 4.0
+          distance: 370
+          cost: 430
+  - from: Bari
+    to: Patras
+    modes:
+      - ferry:
+          duration: 16.5
+          distance: 510
+          cost: 70

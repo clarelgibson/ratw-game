@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Race Across The World</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <!-- Vendored libraries (loaded as globals before the ES modules run) -->
+    <script src="vendor/d3.min.js"></script>
+    <script src="vendor/topojson-client.min.js"></script>
+    <script src="vendor/js-yaml.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>Race Across The World</h1>
+      <p class="subtitle">London → Delphi · no flights · beat the clock without going broke</p>
+    </header>
+
+    <main>
+      <section class="map-wrap">
+        <svg id="map" aria-label="World map"></svg>
+      </section>
+
+      <aside class="panel">
+        <div id="hud" class="hud">
+          <div class="hud-item">
+            <span class="hud-label">Budget left</span>
+            <span id="hud-budget" class="hud-value">—</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">Time elapsed</span>
+            <span id="hud-time" class="hud-value">0h 0m</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">Current city</span>
+            <span id="hud-city" class="hud-value">—</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">Distance to Delphi</span>
+            <span id="hud-distance" class="hud-value">—</span>
+          </div>
+        </div>
+
+        <h2 id="routes-title">Loading…</h2>
+        <div id="routes" class="routes"></div>
+      </aside>
+    </main>
+
+    <div id="leaderboard" class="leaderboard hidden">
+      <div class="leaderboard-card">
+        <h2>Race over</h2>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Racer</th><th>Result</th><th>Budget</th></tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+        <button onclick="location.reload()">Play again</button>
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
