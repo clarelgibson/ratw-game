@@ -5,6 +5,7 @@ import { getCities, getCity } from './data.js';
 
 const WIDTH = 960;
 const HEIGHT = 480; // equirectangular world is 2:1
+const PAD = 48; // px padding so edge city labels aren't clipped
 
 let projection;
 let svg;
@@ -23,7 +24,15 @@ export async function initMap(svgSelector) {
   const world = await (await fetch('assets/world-110m.json')).json();
   const land = topojson.feature(world, world.objects.countries);
 
-  projection = d3.geoEquirectangular().fitSize([WIDTH, HEIGHT], { type: 'Sphere' });
+  // Zoom the view to just fit the named cities (with padding for labels). The
+  // world land still renders behind through the same projection as backdrop.
+  const cityPoints = {
+    type: 'MultiPoint',
+    coordinates: getCities().map((c) => [c.longitude, c.latitude]),
+  };
+  projection = d3
+    .geoEquirectangular()
+    .fitExtent([[PAD, PAD], [WIDTH - PAD, HEIGHT - PAD]], cityPoints);
   const path = d3.geoPath(projection);
 
   // Ocean background.
@@ -82,16 +91,26 @@ export function animateMarkerTo(cityName) {
   const y0 = +markerEl.attr('cy');
 
   return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      markerEl.attr('cx', tx).attr('cy', ty); // snap to exact target
+      resolve();
+    };
     const start = performance.now();
     function frame(now) {
+      if (done) return;
       const t = Math.min(1, (now - start) / GLIDE_MS);
       // ease-in-out
       const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
       markerEl.attr('cx', x0 + (tx - x0) * e).attr('cy', y0 + (ty - y0) * e);
       if (t < 1) requestAnimationFrame(frame);
-      else resolve();
+      else finish();
     }
     requestAnimationFrame(frame);
+    // Safety net: if rAF is throttled (e.g. a backgrounded tab), still complete.
+    setTimeout(finish, GLIDE_MS + 300);
   });
 }
 

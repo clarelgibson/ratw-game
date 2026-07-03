@@ -46,6 +46,30 @@
       </aside>
     </main>
 
+    <div id="menu" class="overlay">
+      <div class="overlay-card">
+        <h2>Race Across The World</h2>
+        <p class="overlay-sub">London → Delphi. Choose your opponent.</p>
+        <div class="menu-buttons">
+          <button id="menu-vs-computer" class="big-btn">Play vs Computer</button>
+          <button id="menu-vs-human" class="big-btn">Play vs Human</button>
+        </div>
+        <div id="name-entry" class="name-entry hidden">
+          <label>Player 1 <input id="name-1" type="text" maxlength="16" placeholder="Player 1" /></label>
+          <label>Player 2 <input id="name-2" type="text" maxlength="16" placeholder="Player 2" /></label>
+          <button id="name-start" class="big-btn">Start race</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pass" class="overlay hidden">
+      <div class="overlay-card">
+        <h2>Pass the laptop</h2>
+        <p class="overlay-sub">Hand over to <strong id="pass-name">Player 2</strong>.</p>
+        <button id="pass-btn" class="big-btn">Start my turn</button>
+      </div>
+    </div>
+
     <div id="leaderboard" class="leaderboard hidden">
       <div class="leaderboard-card">
         <h2>Race over</h2>

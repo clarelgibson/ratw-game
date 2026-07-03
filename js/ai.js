@@ -1,9 +1,9 @@
-// Balanced, budget-aware computer opponent.
-// It prefers faster routes but only takes a route if it can still afford the
-// cheapest path to the destination afterwards, so it won't strand itself.
+// Fully random computer opponent.
+// At each city it picks uniformly at random among the routes it can currently
+// afford — ignoring whether it can still reach the finish — so it travels a
+// different way every game and often strands itself (easy to beat).
 import { DEST } from './config.js';
 import { routesFrom } from './data.js';
-import { cheapestPathCost } from './pathfinding.js';
 
 // Simulate the opponent's whole journey from `start`, returning a result:
 //   { legs: [...], timeElapsed, distanceTravelled, budgetRemaining, reached }
@@ -22,20 +22,8 @@ export function runOpponent(start, budget) {
     const options = routesFrom(current).filter((leg) => leg.cost <= budgetRemaining);
     if (options.length === 0) break; // stranded: no affordable onward route
 
-    // Prefer routes that keep us solvent to the finish; among those, fastest.
-    const solvent = options.filter(
-      (leg) => leg.cost + cheapestPathCost(leg.to, DEST) <= budgetRemaining
-    );
-    const pool = solvent.length ? solvent : options;
-
-    let choice = pool[0];
-    if (solvent.length) {
-      // Fastest among solvent options.
-      for (const leg of pool) if (leg.duration < choice.duration) choice = leg;
-    } else {
-      // No safe option: spend as little as possible and hope.
-      for (const leg of pool) if (leg.cost < choice.cost) choice = leg;
-    }
+    // Pick uniformly at random among the affordable options.
+    const choice = options[Math.floor(Math.random() * options.length)];
 
     budgetRemaining -= choice.cost;
     timeElapsed += choice.duration;

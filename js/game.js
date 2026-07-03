@@ -1,5 +1,7 @@
-// Core game flow: human plays to Delphi (or runs out of money), then the
-// computer opponent's journey is simulated and replayed, then the leaderboard.
+// Core game flow. A reusable per-player turn drives both modes:
+//   • vs Computer: you play, then the random AI's journey is replayed.
+//   • vs Human: player 1 plays, the laptop is passed, player 2 plays.
+// Either way both results go to the shared leaderboard.
 import { START, DEST, AI_REPLAY_MS } from './config.js';
 import { getCity, routesFrom } from './data.js';
 import { runOpponent } from './ai.js';
@@ -13,8 +15,9 @@ import {
 const MODE_ICON = { bus: '🚌', train: '🚆', taxi: '🚕', ferry: '⛴️' };
 
 let startingBudget = 0;
-let state;
+let state; // current player's turn state
 let busy = false; // ignore clicks mid-animation
+let resolveTurn = null; // resolves the in-progress playTurn promise
 
 // --- DOM handles ---
 const el = {
@@ -26,6 +29,9 @@ const el = {
   routesTitle: () => document.getElementById('routes-title'),
   leaderboard: () => document.getElementById('leaderboard'),
   leaderboardBody: () => document.getElementById('leaderboard-body'),
+  pass: () => document.getElementById('pass'),
+  passName: () => document.getElementById('pass-name'),
+  passBtn: () => document.getElementById('pass-btn'),
 };
 
 function formatTime(hours) {
@@ -50,7 +56,7 @@ function updateHud() {
 function renderRoutes() {
   const container = el.routes();
   container.innerHTML = '';
-  el.routesTitle().textContent = `Routes from ${state.currentCity}`;
+  el.routesTitle().textContent = `${state.label} — routes from ${state.currentCity}`;
 
   const legs = routesFrom(state.currentCity);
   for (const leg of legs) {
@@ -78,39 +84,74 @@ async function chooseRoute(leg) {
   state.timeElapsed += leg.duration;
   state.distanceTravelled += leg.distance;
   state.currentCity = leg.to;
+  state.legs.push(leg);
 
   el.routes().innerHTML = '';
   await animateMarkerTo(leg.to);
   updateHud();
   busy = false;
 
-  // End conditions.
-  if (state.currentCity === DEST) {
-    state.reached = true;
-    return endHumanTurn();
-  }
-  const canContinue = routesFrom(state.currentCity).some((r) => r.cost <= state.budgetRemaining);
-  if (!canContinue) {
-    state.reached = false;
-    return endHumanTurn();
-  }
+  // End conditions: reached the finish, or can't afford any onward route.
+  const reached = state.currentCity === DEST;
+  const stranded =
+    !reached && !routesFrom(state.currentCity).some((r) => r.cost <= state.budgetRemaining);
+  if (reached || stranded) return finishTurn(reached);
+
   renderRoutes();
 }
 
-async function endHumanTurn() {
-  el.routesTitle().textContent = state.reached
-    ? 'You reached Delphi! The opponent is now travelling…'
-    : 'Out of money! Stranded. The opponent is now travelling…';
-  el.routes().innerHTML = '';
+function finishTurn(reached) {
+  const result = {
+    name: state.label,
+    reached,
+    time: state.timeElapsed,
+    distance: state.distanceTravelled,
+    budget: state.budgetRemaining,
+    legs: state.legs,
+  };
+  const done = resolveTurn;
+  resolveTurn = null;
+  done(result);
+}
 
-  const opponent = runOpponent(START, startingBudget);
-  await replayOpponent(opponent);
-  showLeaderboard(state, opponent);
+// Play one human player's whole turn; resolves with their result.
+function playTurn({ label, markerKind }) {
+  state = {
+    label,
+    currentCity: START,
+    budgetRemaining: startingBudget,
+    timeElapsed: 0,
+    distanceTravelled: 0,
+    legs: [],
+  };
+  setMarkerKind(markerKind);
+  placeMarkerAt(START);
+  updateHud();
+  renderRoutes();
+  return new Promise((resolve) => {
+    resolveTurn = resolve;
+  });
+}
+
+// "Pass the laptop" interstitial; resolves when the next player is ready.
+function passLaptop(toName) {
+  el.passName().textContent = toName;
+  el.pass().classList.remove('hidden');
+  return new Promise((resolve) => {
+    const btn = el.passBtn();
+    const handler = () => {
+      btn.removeEventListener('click', handler);
+      el.pass().classList.add('hidden');
+      resolve();
+    };
+    btn.addEventListener('click', handler);
+  });
 }
 
 async function replayOpponent(opponent) {
   setMarkerKind('opponent');
   placeMarkerAt(START);
+  el.routesTitle().textContent = 'Computer is travelling…';
   await new Promise((r) => setTimeout(r, AI_REPLAY_MS));
   for (const leg of opponent.legs) {
     await animateMarkerTo(leg.to);
@@ -118,31 +159,14 @@ async function replayOpponent(opponent) {
   }
 }
 
-// Rank human vs opponent and render the leaderboard overlay.
-function showLeaderboard(human, opponent) {
-  const entries = [
-    {
-      name: 'You',
-      reached: human.reached,
-      time: human.timeElapsed,
-      distance: human.distanceTravelled,
-      budget: human.budgetRemaining,
-    },
-    {
-      name: 'Computer',
-      reached: opponent.reached,
-      time: opponent.timeElapsed,
-      distance: opponent.distanceTravelled,
-      budget: opponent.budgetRemaining,
-    },
-  ];
-
-  const { entries: ranked, winner, bothFailed } = rankRacers(entries);
+// Rank the two results and render the leaderboard overlay.
+function showLeaderboard(results) {
+  const { entries: ranked, winner, bothFailed } = rankRacers(results);
   const body = el.leaderboardBody();
   body.innerHTML = '';
   ranked.forEach((e, i) => {
     const row = document.createElement('tr');
-    if (e.name === 'You') row.className = 'you-row';
+    if (e === winner) row.className = 'you-row';
     const result = e.reached
       ? `Finished in ${formatTime(e.time)}`
       : `Stranded — travelled ${e.distance.toLocaleString('en-GB')} km`;
@@ -154,29 +178,37 @@ function showLeaderboard(human, opponent) {
     body.appendChild(row);
   });
 
+  const suffix = bothFailed ? ' (furthest travelled)' : '';
   const title = el.leaderboard().querySelector('h2');
-  if (winner.name === 'You') {
-    title.textContent = bothFailed ? 'You win (furthest travelled)!' : 'You win! 🏆';
-  } else {
-    title.textContent = bothFailed
-      ? 'Computer wins (furthest travelled).'
-      : 'Computer wins.';
-  }
+  title.textContent =
+    winner.name === 'You' ? `You win!${suffix} 🏆` : `${winner.name} wins!${suffix}`;
 
   el.leaderboard().classList.remove('hidden');
 }
 
-export function startGame(budget) {
+// --- Mode orchestrators (called by main.js) ---
+
+export async function playVsComputer(budget) {
   startingBudget = budget;
-  state = {
-    currentCity: START,
-    budgetRemaining: budget,
-    timeElapsed: 0,
-    distanceTravelled: 0,
-    reached: false,
-  };
-  setMarkerKind('player');
-  placeMarkerAt(START);
-  updateHud();
-  renderRoutes();
+  const you = await playTurn({ label: 'You', markerKind: 'player' });
+  const computer = runOpponent(START, budget);
+  await replayOpponent(computer);
+  showLeaderboard([
+    you,
+    {
+      name: 'Computer',
+      reached: computer.reached,
+      time: computer.timeElapsed,
+      distance: computer.distanceTravelled,
+      budget: computer.budgetRemaining,
+    },
+  ]);
+}
+
+export async function playVsHuman(budget, name1, name2) {
+  startingBudget = budget;
+  const p1 = await playTurn({ label: name1, markerKind: 'player' });
+  await passLaptop(name2);
+  const p2 = await playTurn({ label: name2, markerKind: 'opponent' });
+  showLeaderboard([p1, p2]);
 }

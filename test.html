@@ -20,6 +20,8 @@
       import { cheapestPathCost, fastestPathDuration } from './js/pathfinding.js';
       import { rankRacers } from './js/leaderboard.js';
       import { START, DEST } from './js/config.js';
+      import { runOpponent } from './js/ai.js';
+      import { routesFrom } from './js/data.js';
 
       const out = document.getElementById('out');
       let failures = 0;
@@ -64,6 +66,38 @@
           { name: 'B', reached: false, time: 25, distance: 1200 },
         ]);
         check('neither finished: furthest distance wins', r.winner.name === 'A' && r.bothFailed);
+
+        // --- Random AI sanity (non-deterministic; check invariants over many runs) ---
+        const budget = 390;
+        let everNegative = false;
+        let everUnaffordable = false;
+        let shapeOk = true;
+        const signatures = new Set();
+        for (let i = 0; i < 200; i++) {
+          const r = runOpponent(START, budget);
+          if (r.budgetRemaining < 0) everNegative = true;
+          if (
+            typeof r.reached !== 'boolean' ||
+            !Array.isArray(r.legs) ||
+            !Number.isFinite(r.timeElapsed) ||
+            !Number.isFinite(r.distanceTravelled)
+          )
+            shapeOk = false;
+          // Each chosen leg must have been a real, affordable option at the time.
+          let bud = budget;
+          let city = START;
+          for (const leg of r.legs) {
+            const opts = routesFrom(city);
+            if (!opts.includes(leg) || leg.cost > bud) everUnaffordable = true;
+            bud -= leg.cost;
+            city = leg.to;
+          }
+          signatures.add(r.legs.map((l) => l.to + ':' + l.mode).join('>'));
+        }
+        check('AI result shape is valid', shapeOk);
+        check('AI never overspends its budget', !everNegative);
+        check('AI only ever takes affordable, real routes', !everUnaffordable);
+        check('AI is random (produces varied journeys)', signatures.size > 5, `${signatures.size} distinct`);
 
         const summary = document.createElement('h1');
         summary.textContent = failures === 0 ? 'ALL TESTS PASSED' : `${failures} TEST(S) FAILED`;

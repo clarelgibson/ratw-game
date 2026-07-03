@@ -1,9 +1,10 @@
-// Bootstrap: load data, render the map, compute the budget, start the race.
+// Bootstrap: load data, render the map, compute the budget, then show the menu
+// and start the chosen game mode.
 import { START, DEST, BUDGET_MULTIPLIER } from './config.js';
 import { loadData } from './data.js';
 import { cheapestPathCost } from './pathfinding.js';
 import { initMap } from './map.js';
-import { startGame } from './game.js';
+import { playVsComputer, playVsHuman } from './game.js';
 
 async function main() {
   await loadData();
@@ -13,7 +14,25 @@ async function main() {
   const cheapest = cheapestPathCost(START, DEST);
   const budget = Math.round((cheapest * BUDGET_MULTIPLIER) / 10) * 10;
 
-  startGame(budget);
+  const menu = document.getElementById('menu');
+  const nameEntry = document.getElementById('name-entry');
+
+  document.getElementById('menu-vs-computer').addEventListener('click', () => {
+    menu.classList.add('hidden');
+    playVsComputer(budget);
+  });
+
+  // "Play vs Human" reveals the name fields; "Start race" begins the game.
+  document.getElementById('menu-vs-human').addEventListener('click', () => {
+    nameEntry.classList.remove('hidden');
+  });
+
+  document.getElementById('name-start').addEventListener('click', () => {
+    const name1 = document.getElementById('name-1').value.trim() || 'Player 1';
+    const name2 = document.getElementById('name-2').value.trim() || 'Player 2';
+    menu.classList.add('hidden');
+    playVsHuman(budget, name1, name2);
+  });
 }
 
 main().catch((err) => {
