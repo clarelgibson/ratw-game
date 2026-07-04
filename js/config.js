@@ -13,5 +13,9 @@ export const GLIDE_MS = 900;
 // Pause between the computer opponent's simulated legs when replaying its journey.
 export const AI_REPLAY_MS = 650;
 
-// Opponent strategy (only "balanced" implemented this iteration).
-export const OPPONENT_STRATEGY = 'balanced';
+// Opponent strategy ("random" this iteration — picks affordable routes at random).
+export const OPPONENT_STRATEGY = 'random';
+
+// When a racer is broke (can't afford any onward route) they may walk a land
+// route for free at this speed (km/h). Ferry/sea crossings can't be walked.
+export const WALK_SPEED_KMH = 5;

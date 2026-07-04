@@ -2,8 +2,8 @@
 //   • vs Computer: you play, then the random AI's journey is replayed.
 //   • vs Human: player 1 plays, the laptop is passed, player 2 plays.
 // Either way both results go to the shared leaderboard.
-import { START, DEST, AI_REPLAY_MS } from './config.js';
-import { getCity, routesFrom } from './data.js';
+import { START, DEST, AI_REPLAY_MS, WALK_SPEED_KMH } from './config.js';
+import { getCity, routesFrom, walkableFrom } from './data.js';
 import { runOpponent } from './ai.js';
 import { rankRacers } from './leaderboard.js';
 import {
@@ -12,7 +12,12 @@ import {
   setMarkerKind,
 } from './map.js';
 
-const MODE_ICON = { bus: '🚌', train: '🚆', taxi: '🚕', ferry: '⛴️' };
+const MODE_ICON = { bus: '🚌', train: '🚆', taxi: '🚕', ferry: '⛴️', walk: '🚶' };
+
+// Build a free "walk" leg to a neighbouring city (very slow — distance / speed).
+function walkLeg(to, distance) {
+  return { to, mode: 'walk', duration: distance / WALK_SPEED_KMH, distance, cost: 0 };
+}
 
 let startingBudget = 0;
 let state; // current player's turn state
@@ -59,6 +64,8 @@ function renderRoutes() {
   el.routesTitle().textContent = `${state.label} — routes from ${state.currentCity}`;
 
   const legs = routesFrom(state.currentCity);
+  const anyAffordable = legs.some((leg) => leg.cost <= state.budgetRemaining);
+
   for (const leg of legs) {
     const affordable = leg.cost <= state.budgetRemaining;
     const btn = document.createElement('button');
@@ -73,6 +80,31 @@ function renderRoutes() {
       </span>`;
     btn.addEventListener('click', () => chooseRoute(leg));
     container.appendChild(btn);
+  }
+
+  // Out of money? Offer to walk any land route — free, but painfully slow.
+  if (!anyAffordable) {
+    const walks = walkableFrom(state.currentCity);
+    if (walks.length) {
+      const note = document.createElement('p');
+      note.className = 'broke-note';
+      note.textContent = "Out of money! You can only walk from here — free, but very slow.";
+      container.appendChild(note);
+      for (const w of walks) {
+        const leg = walkLeg(w.to, w.distance);
+        const btn = document.createElement('button');
+        btn.className = 'route walk';
+        btn.innerHTML = `
+          <span class="route-head">${MODE_ICON.walk} walk to <strong>${leg.to}</strong></span>
+          <span class="route-stats">
+            <span>Free</span>
+            <span>${formatTime(leg.duration)}</span>
+            <span>${leg.distance.toLocaleString('en-GB')} km</span>
+          </span>`;
+        btn.addEventListener('click', () => chooseRoute(leg));
+        container.appendChild(btn);
+      }
+    }
   }
 }
 
@@ -91,11 +123,12 @@ async function chooseRoute(leg) {
   updateHud();
   busy = false;
 
-  // End conditions: reached the finish, or can't afford any onward route.
+  // End conditions: reached the finish, or truly stuck — can't afford any route
+  // AND can't walk anywhere (only water crossings / dead-ends ahead).
   const reached = state.currentCity === DEST;
-  const stranded =
-    !reached && !routesFrom(state.currentCity).some((r) => r.cost <= state.budgetRemaining);
-  if (reached || stranded) return finishTurn(reached);
+  const affordablePaid = routesFrom(state.currentCity).some((r) => r.cost <= state.budgetRemaining);
+  const canWalk = walkableFrom(state.currentCity).length > 0;
+  if (reached || (!affordablePaid && !canWalk)) return finishTurn(reached);
 
   renderRoutes();
 }

@@ -21,7 +21,7 @@
       import { rankRacers } from './js/leaderboard.js';
       import { START, DEST } from './js/config.js';
       import { runOpponent } from './js/ai.js';
-      import { routesFrom } from './js/data.js';
+      import { routesFrom, walkableFrom } from './js/data.js';
 
       const out = document.getElementById('out');
       let failures = 0;
@@ -67,6 +67,16 @@
         ]);
         check('neither finished: furthest distance wins', r.winner.name === 'A' && r.bothFailed);
 
+        // --- Walk-when-broke (walkableFrom excludes sea crossings) ---
+        // London reaches Dover/Paris/Düsseldorf, all by land.
+        check('London has 3 walkable land routes', walkableFrom('London').length === 3);
+        // Dover→Calais is ferry-only (English Channel), so Dover can't be walked out of.
+        check('Dover has no walkable route (ferry-only)', walkableFrom('Dover').length === 0);
+        // A broke racer in mainland Europe walks instead of instantly stranding.
+        const walkedRun = runOpponent('Paris', 0); // £0 in Paris → must walk (land routes exist)
+        check('broke AI walks instead of stranding', walkedRun.legs.length >= 1);
+        check('walk legs are all free', walkedRun.legs.every((l) => l.mode === 'walk' && l.cost === 0));
+
         // --- Random AI sanity (non-deterministic; check invariants over many runs) ---
         const budget = 390;
         let everNegative = false;
@@ -84,11 +94,16 @@
           )
             shapeOk = false;
           // Each chosen leg must have been a real, affordable option at the time.
+          // Paid legs come from routesFrom; free walk legs come from walkableFrom.
           let bud = budget;
           let city = START;
           for (const leg of r.legs) {
-            const opts = routesFrom(city);
-            if (!opts.includes(leg) || leg.cost > bud) everUnaffordable = true;
+            if (leg.mode === 'walk') {
+              const ok = leg.cost === 0 && walkableFrom(city).some((w) => w.to === leg.to);
+              if (!ok) everUnaffordable = true;
+            } else if (!routesFrom(city).includes(leg) || leg.cost > bud) {
+              everUnaffordable = true;
+            }
             bud -= leg.cost;
             city = leg.to;
           }

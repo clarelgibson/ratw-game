@@ -182,6 +182,22 @@ main {
   cursor: not-allowed;
 }
 
+.broke-note {
+  margin: 6px 0 2px;
+  font-size: 13px;
+  color: var(--player-red);
+  font-weight: 600;
+}
+
+.route.walk {
+  border-style: dashed;
+  border-color: var(--muted);
+}
+
+.route.walk:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
 .route-head {
   font-size: 14px;
   text-transform: capitalize;

@@ -67,3 +67,16 @@ export function getCity(name) {
 export function routesFrom(name) {
   return adjacency.get(name) || [];
 }
+
+// Destinations reachable on foot from a city: one per outgoing route that has a
+// non-ferry (land) mode, using the shortest land distance for that route.
+// Ferry-only routes are sea crossings and cannot be walked.
+export function walkableFrom(name) {
+  const byDest = new Map();
+  for (const leg of routesFrom(name)) {
+    if (leg.mode === 'ferry') continue;
+    const prev = byDest.get(leg.to);
+    if (!prev || leg.distance < prev.distance) byDest.set(leg.to, leg.distance);
+  }
+  return [...byDest.entries()].map(([to, distance]) => ({ to, distance }));
+}
