@@ -2,18 +2,22 @@
 
 ## Done
 - [X] Build version of game with 2 players
+- [X] Add walk when broke feature
+- [X] Publish to the web (GitHub Pages)
+- [X] Come up with a name for the game (Overland)
+- [X] Change the branding (colours/fonts) to tie in with my personal branding
 
 ## Now
- 
+- [ ] Optimize for mobile (map labels need to be bigger on mobile)
+- [ ] Have multiple difficulties for the computer player
+
 ## Next
+- [ ] Add sleep to game mechanics
+- [ ] Add more cities to the London-Delphi leg
 
 ## Later
-- [ ] Add more cities to the London-Dephi leg
-- [ ] Build second leg of London-Singapore race
 - [ ] Make it alternate players turn by turn
-- [ ] Allow more than 2 players to play over a network
-- [ ] Publish to the web
-- [ ] Add more races (e.g. Lison to Vladivostok, or Ohio to New York City)
-- [ ] Add sleep to game mechanics
+- [ ] Build second leg of London-Singapore race
+- [ ] Add more races (e.g. Lisbon to Vladivostok, or Ohio to New York City)
 - [ ] Allow players to get a job if they run out of money (with time penalty)
-- [ ] Have multiple difficulties for the computer player
+- [ ] Allow more than 2 players to play over a network

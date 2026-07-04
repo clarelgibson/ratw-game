@@ -1,15 +1,18 @@
 :root {
-  --bg: #14161a;
-  --panel: #1d2026;
-  --ink: #e8eaed;
-  --muted: #9aa0a8;
-  --line: #2c3038;
-  --ocean: #0f1115;
-  --land: #3a3f47;
-  --land-stroke: #14161a;
-  --accent-yellow: #ffd23f; /* start & destination cities */
-  --player-red: #e23b3b; /* the human's marker */
-  --opponent-blue: #4aa3ff; /* the computer's marker */
+  /* Personal brand palette (datatranslator.co.uk): navy + teal + light slate */
+  --bg: #1b2531; /* app background (dark navy) */
+  --panel: #202c39; /* panels & cards (brand navy) */
+  --ink: #ecf0f4; /* primary text (brand light) */
+  --muted: #91a1b2; /* secondary text (muted slate) */
+  --line: #34404c; /* borders (brand slate) */
+  --ocean: #16202b; /* map sea (deep navy) */
+  --land: #37454f; /* map land (slate) */
+  --land-stroke: #1b2531;
+  --accent: #7ba9af; /* brand teal — UI accent (buttons, hovers, focus) */
+  --accent-strong: #55868c; /* darker teal for hover states */
+  --endpoint: #f4b942; /* start & destination cities (warm gold, high contrast) */
+  --player-red: #ff4f5c; /* the human's marker (brand red) */
+  --opponent-blue: #6fb1e0; /* the computer's marker (cool blue) */
 }
 
 * {
@@ -18,9 +21,16 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--ink);
+}
+
+/* Headings use the portfolio's display serif. */
+header h1,
+.overlay-card h2,
+.leaderboard-card h2 {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
 }
 
 header {
@@ -29,8 +39,8 @@ header {
 
 header h1 {
   margin: 0;
-  font-size: 22px;
-  letter-spacing: 0.5px;
+  font-size: 26px;
+  letter-spacing: 0.3px;
 }
 
 .subtitle {
@@ -75,7 +85,7 @@ main {
 }
 
 .city-dot.endpoint {
-  fill: var(--accent-yellow);
+  fill: var(--endpoint);
   stroke: #000;
   stroke-width: 0.5;
 }
@@ -87,7 +97,7 @@ main {
 }
 
 .city-label.endpoint {
-  fill: var(--accent-yellow);
+  fill: var(--endpoint);
   font-size: 10px;
   font-weight: 700;
 }
@@ -96,14 +106,14 @@ main {
   fill: var(--player-red);
   stroke: #fff;
   stroke-width: 1.5;
-  filter: drop-shadow(0 0 4px rgba(226, 59, 59, 0.8));
+  filter: drop-shadow(0 0 4px rgba(255, 79, 92, 0.85));
 }
 
 .opponent-marker {
   fill: var(--opponent-blue);
   stroke: #fff;
   stroke-width: 1.5;
-  filter: drop-shadow(0 0 4px rgba(74, 163, 255, 0.8));
+  filter: drop-shadow(0 0 4px rgba(111, 177, 224, 0.85));
 }
 
 /* --- Side panel --- */
@@ -170,7 +180,7 @@ main {
 }
 
 .route:hover:not(:disabled) {
-  border-color: var(--accent-yellow);
+  border-color: var(--accent);
 }
 
 .route:active:not(:disabled) {
@@ -252,8 +262,8 @@ main {
 }
 
 .big-btn {
-  background: var(--accent-yellow);
-  color: #000;
+  background: var(--accent);
+  color: var(--panel);
   border: none;
   border-radius: 8px;
   padding: 12px 18px;
@@ -297,7 +307,7 @@ main {
 
 .name-entry input:focus {
   outline: none;
-  border-color: var(--accent-yellow);
+  border-color: var(--accent);
 }
 
 /* --- Leaderboard overlay --- */
@@ -348,14 +358,14 @@ main {
 }
 
 .you-row {
-  background: rgba(255, 210, 63, 0.1);
+  background: rgba(123, 169, 175, 0.16);
   font-weight: 700;
 }
 
 .leaderboard-card button {
   margin-top: 18px;
-  background: var(--accent-yellow);
-  color: #000;
+  background: var(--accent);
+  color: var(--panel);
   border: none;
   border-radius: 8px;
   padding: 10px 18px;

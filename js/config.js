@@ -1,4 +1,4 @@
-// Game configuration constants for Race Across The World.
+// Game configuration constants for Overland.
 export const START = 'London';
 export const DEST = 'Delphi';
 
