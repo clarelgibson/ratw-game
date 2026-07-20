@@ -7,9 +7,23 @@ const WIDTH = 960;
 const HEIGHT = 480; // equirectangular world is 2:1
 const PAD = 48; // px padding so edge city labels aren't clipped
 
+// Target on-screen sizes (CSS px). Because the SVG scales to fit its container
+// (heavily on mobile), these are converted to viewBox units each render so the
+// map reads at a consistent, legible size on any device.
+const SIZES = {
+  labelPx: 11,
+  endpointLabelPx: 12,
+  dotPx: 3.5,
+  endpointDotPx: 5.5,
+  markerPx: 7,
+  labelGapPx: 6,
+};
+
 let projection;
 let svg;
 let markerEl;
+let cityNodes = [];
+let resizeBound = false;
 
 // Project a city to [x, y] pixel coordinates using the same projection as the map.
 function projectCity(name) {
@@ -53,26 +67,28 @@ export async function initMap(svgSelector) {
 
   // City markers + labels — only cities present in cities.yml.
   const cityGroup = svg.append('g').attr('class', 'cities');
-  for (const c of getCities()) {
+  cityNodes = getCities().map((c) => {
     const [x, y] = projection([c.longitude, c.latitude]);
     const isStart = c.name === START;
-    const isDest = c.name === DEST;
-    const endpoint = isStart || isDest;
+    const endpoint = isStart || c.name === DEST;
+    return { x, y, endpoint, isStart, name: c.name };
+  });
 
-    cityGroup
-      .append('circle')
-      .attr('class', `city-dot${endpoint ? ' endpoint' : ''}`)
-      .attr('cx', x)
-      .attr('cy', y)
-      .attr('r', endpoint ? 5 : 3);
+  cityGroup
+    .selectAll('circle')
+    .data(cityNodes)
+    .join('circle')
+    .attr('class', (d) => `city-dot${d.endpoint ? ' endpoint' : ''}`)
+    .attr('cx', (d) => d.x)
+    .attr('cy', (d) => d.y);
 
-    cityGroup
-      .append('text')
-      .attr('class', `city-label${endpoint ? ' endpoint' : ''}`)
-      .attr('x', x + 6)
-      .attr('y', y + 3)
-      .text(endpoint ? `${c.name}${isStart ? ' (start)' : ' (finish)'}` : c.name);
-  }
+  cityGroup
+    .selectAll('text')
+    .data(cityNodes)
+    .join('text')
+    .attr('class', (d) => `city-label${d.endpoint ? ' endpoint' : ''}`)
+    .attr('dominant-baseline', 'central')
+    .text((d) => d.name);
 
   // Player marker (red), starts on the start city.
   const [sx, sy] = projectCity(START);
@@ -80,8 +96,53 @@ export async function initMap(svgSelector) {
     .append('circle')
     .attr('class', 'player-marker')
     .attr('cx', sx)
-    .attr('cy', sy)
-    .attr('r', 6);
+    .attr('cy', sy);
+
+  // Size everything for the current viewport, and keep it sized on resize.
+  applyResponsiveSizes();
+  if (!resizeBound) {
+    let t;
+    window.addEventListener('resize', () => {
+      clearTimeout(t);
+      t = setTimeout(applyResponsiveSizes, 120);
+    });
+    resizeBound = true;
+  }
+}
+
+// Convert the target on-screen px sizes to viewBox units for the current
+// display scale, so labels/dots/marker stay legible at any viewport width.
+// Right-edge labels are anchored inward so they don't clip off the map.
+function applyResponsiveSizes() {
+  if (!svg) return;
+  const displayedWidth = svg.node().getBoundingClientRect().width;
+  if (!displayedWidth) return;
+  const s = (px) => (px * WIDTH) / displayedWidth; // px → viewBox units
+  // On a wide map, spell out the start/finish suffix; on narrow screens the
+  // gold colour (and the header) already convey it, so keep labels short.
+  const wide = displayedWidth >= 560;
+
+  svg
+    .selectAll('.city-dot')
+    .attr('r', (d) => s(d.endpoint ? SIZES.endpointDotPx : SIZES.dotPx));
+
+  svg
+    .selectAll('.city-label')
+    .style('font-size', (d) => `${s(d.endpoint ? SIZES.endpointLabelPx : SIZES.labelPx)}px`)
+    .each(function (d) {
+      const sel = d3.select(this);
+      if (d.endpoint) {
+        sel.text(d.name + (wide ? (d.isStart ? ' (start)' : ' (finish)') : ''));
+      }
+      const rightSide = d.x > WIDTH * 0.7;
+      const gap = s(SIZES.labelGapPx);
+      sel
+        .attr('text-anchor', rightSide ? 'end' : 'start')
+        .attr('x', d.x + (rightSide ? -gap : gap))
+        .attr('y', d.y);
+    });
+
+  if (markerEl) markerEl.attr('r', s(SIZES.markerPx));
 }
 
 // Glide the player marker from its current position to `cityName`. Resolves when done.

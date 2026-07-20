@@ -376,5 +376,14 @@ main {
 @media (max-width: 820px) {
   main {
     grid-template-columns: 1fr;
+    padding: 8px 12px 20px; /* narrower gutters give the map more width */
+  }
+
+  header {
+    padding: 14px 12px 6px;
+  }
+
+  .hud {
+    grid-template-columns: 1fr 1fr;
   }
 }
