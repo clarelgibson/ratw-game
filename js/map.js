@@ -250,11 +250,26 @@ function layoutLabels(s) {
     .attr('stroke-width', s(0.7));
 }
 
+// Pan the map so [x, y] is centred, keeping the current zoom. Only acts when
+// zoomed in — at the default zoom the whole map is visible (and translateExtent
+// would clamp it to a no-op anyway), so the view stays still.
+function followCamera(x, y) {
+  if (!zoomBehavior || zoomK <= 1.02) return;
+  svg
+    .transition()
+    .duration(GLIDE_MS)
+    .ease(d3.easeCubicInOut)
+    .call(zoomBehavior.translateTo, x, y);
+}
+
 // Glide the player marker from its current position to `cityName`. Resolves when done.
 export function animateMarkerTo(cityName) {
   const [tx, ty] = projectCity(cityName);
   const x0 = +markerEl.attr('cx');
   const y0 = +markerEl.attr('cy');
+
+  // Let the camera follow the marker to its destination.
+  followCamera(tx, ty);
 
   return new Promise((resolve) => {
     let done = false;
