@@ -21,9 +21,12 @@ const SIZES = {
 
 let projection;
 let svg;
+let contentG; // zoom/pan target: holds land, cities and the marker
 let markerEl;
 let cityNodes = [];
 let resizeBound = false;
+let zoomBehavior;
+let zoomK = 1; // current zoom scale; labels/dots counter-scale by this
 
 // Project a city to [x, y] pixel coordinates using the same projection as the map.
 function projectCity(name) {
@@ -49,15 +52,18 @@ export async function initMap(svgSelector) {
     .fitExtent([[PAD, PAD], [WIDTH - PAD, HEIGHT - PAD]], cityPoints);
   const path = d3.geoPath(projection);
 
-  // Ocean background.
+  // Ocean background — stays fixed behind the zoomable content.
   svg
     .append('rect')
     .attr('class', 'ocean')
     .attr('width', WIDTH)
     .attr('height', HEIGHT);
 
+  // Everything below zooms/pans together.
+  contentG = svg.append('g').attr('class', 'content');
+
   // Landmasses (monochrome).
-  svg
+  contentG
     .append('g')
     .attr('class', 'land')
     .selectAll('path')
@@ -66,7 +72,7 @@ export async function initMap(svgSelector) {
     .attr('d', path);
 
   // City markers + labels — only cities present in cities.yml.
-  const cityGroup = svg.append('g').attr('class', 'cities');
+  const cityGroup = contentG.append('g').attr('class', 'cities');
   cityNodes = getCities().map((c) => {
     const [x, y] = projection([c.longitude, c.latitude]);
     const isStart = c.name === START;
@@ -92,11 +98,13 @@ export async function initMap(svgSelector) {
 
   // Player marker (red), starts on the start city.
   const [sx, sy] = projectCity(START);
-  markerEl = svg
+  markerEl = contentG
     .append('circle')
     .attr('class', 'player-marker')
     .attr('cx', sx)
     .attr('cy', sy);
+
+  setupZoom();
 
   // Size everything for the current viewport, and keep it sized on resize.
   applyResponsiveSizes();
@@ -110,6 +118,43 @@ export async function initMap(svgSelector) {
   }
 }
 
+// Zoom & pan. A plain transform would magnify labels along with positions, so
+// on every zoom we re-size labels/dots to stay a constant screen size while the
+// city positions spread apart — which is what actually separates clusters.
+function setupZoom() {
+  zoomBehavior = d3
+    .zoom()
+    .scaleExtent([1, 8])
+    .translateExtent([[0, 0], [WIDTH, HEIGHT]]) // can't pan outside the fitted view
+    .filter((event) => {
+      // Desktop: wheel + double-click zoom, left-drag pan.
+      if (event.type === 'wheel' || event.type === 'dblclick') return true;
+      if (event.touches) {
+        // Pinch (2 fingers) always; one-finger pan only once zoomed in, so at
+        // the default zoom a single-finger swipe still scrolls the page.
+        return event.touches.length >= 2 || zoomK > 1;
+      }
+      return !event.button;
+    })
+    .on('zoom', (event) => {
+      contentG.attr('transform', event.transform);
+      zoomK = event.transform.k;
+      applyResponsiveSizes();
+    });
+
+  svg.call(zoomBehavior);
+
+  const zoomBy = (factor) =>
+    svg.transition().duration(250).call(zoomBehavior.scaleBy, factor);
+  document.getElementById('zoom-in')?.addEventListener('click', () => zoomBy(1.6));
+  document.getElementById('zoom-out')?.addEventListener('click', () => zoomBy(1 / 1.6));
+  document
+    .getElementById('zoom-reset')
+    ?.addEventListener('click', () =>
+      svg.transition().duration(250).call(zoomBehavior.transform, d3.zoomIdentity)
+    );
+}
+
 // Convert the target on-screen px sizes to viewBox units for the current
 // display scale, so labels/dots/marker stay legible at any viewport width.
 // Right-edge labels are anchored inward so they don't clip off the map.
@@ -117,7 +162,9 @@ function applyResponsiveSizes() {
   if (!svg) return;
   const displayedWidth = svg.node().getBoundingClientRect().width;
   if (!displayedWidth) return;
-  const s = (px) => (px * WIDTH) / displayedWidth; // px → viewBox units
+  // px → viewBox units, divided by the zoom scale so on-screen size stays
+  // constant as you zoom (positions spread apart, labels don't grow).
+  const s = (px) => (px * WIDTH) / (displayedWidth * zoomK);
   // On a wide map, spell out the start/finish suffix; on narrow screens the
   // gold colour (and the header) already convey it, so keep labels short.
   const wide = displayedWidth >= 560;
@@ -130,19 +177,77 @@ function applyResponsiveSizes() {
     .selectAll('.city-label')
     .style('font-size', (d) => `${s(d.endpoint ? SIZES.endpointLabelPx : SIZES.labelPx)}px`)
     .each(function (d) {
-      const sel = d3.select(this);
       if (d.endpoint) {
-        sel.text(d.name + (wide ? (d.isStart ? ' (start)' : ' (finish)') : ''));
+        d3.select(this).text(d.name + (wide ? (d.isStart ? ' (start)' : ' (finish)') : ''));
       }
-      const rightSide = d.x > WIDTH * 0.7;
-      const gap = s(SIZES.labelGapPx);
-      sel
-        .attr('text-anchor', rightSide ? 'end' : 'start')
-        .attr('x', d.x + (rightSide ? -gap : gap))
-        .attr('y', d.y);
     });
 
+  layoutLabels(s);
+
   if (markerEl) markerEl.attr('r', s(SIZES.markerPx));
+}
+
+// De-clutter labels: place each beside its dot, then push overlapping labels
+// apart vertically and draw a thin leader line for any that had to move. Runs
+// in viewBox units, so as zoom spreads the dots out the labels relax back home.
+function layoutLabels(s) {
+  const gap = s(SIZES.labelGapPx);
+  const pad = s(2.5); // vertical breathing room between labels (px)
+
+  // Measure each label and seed its box beside the dot.
+  const boxes = [];
+  svg.selectAll('.city-label').each(function (d) {
+    const el = d3.select(this);
+    const w = this.getComputedTextLength();
+    const h = parseFloat(el.style('fontSize')) || s(SIZES.labelPx);
+    const side = d.x > WIDTH * 0.7 ? -1 : 1; // right-edge labels sit to the left
+    const startX = d.x + side * gap;
+    const cx = side > 0 ? startX + w / 2 : startX - w / 2;
+    boxes.push({ el, d, side, startX, cx, w, h, y: d.y, anchorY: d.y });
+  });
+
+  // Iteratively separate labels whose boxes overlap in both axes.
+  for (let it = 0; it < 40; it++) {
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i];
+        const b = boxes[j];
+        if (Math.abs(a.cx - b.cx) >= (a.w + b.w) / 2) continue; // columns don't overlap
+        const minDist = (a.h + b.h) / 2 + pad;
+        const dy = b.y - a.y;
+        if (Math.abs(dy) >= minDist) continue;
+        const push = (minDist - Math.abs(dy)) / 2 + 0.01;
+        const sign = dy === 0 ? 1 : Math.sign(dy);
+        a.y -= push * sign;
+        b.y += push * sign;
+      }
+    }
+    for (const bx of boxes) bx.y += (bx.anchorY - bx.y) * 0.06; // weak pull home
+  }
+
+  // Apply positions and collect leader lines for displaced labels.
+  const lines = [];
+  for (const bx of boxes) {
+    bx.el
+      .attr('text-anchor', bx.side > 0 ? 'start' : 'end')
+      .attr('x', bx.startX)
+      .attr('y', bx.y);
+    if (Math.abs(bx.y - bx.anchorY) > bx.h * 0.6) {
+      lines.push({ x1: bx.d.x, y1: bx.d.y, x2: bx.startX, y2: bx.y });
+    }
+  }
+
+  let leaders = contentG.select('g.leaders');
+  if (leaders.empty()) leaders = contentG.insert('g', 'g.cities').attr('class', 'leaders');
+  leaders
+    .selectAll('line')
+    .data(lines)
+    .join('line')
+    .attr('x1', (d) => d.x1)
+    .attr('y1', (d) => d.y1)
+    .attr('x2', (d) => d.x2)
+    .attr('y2', (d) => d.y2)
+    .attr('stroke-width', s(0.7));
 }
 
 // Glide the player marker from its current position to `cityName`. Resolves when done.
